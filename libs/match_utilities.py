@@ -127,6 +127,9 @@ def _matchProcess(combo_box):
     combo_item = combo_box.currentText() + '.json'
     data_path = Path(Path(__file__).parents[1]) / 'rigs_data' / combo_item
 
+    if len(combo_box.currentText()) == 0:
+        cmds.error("No Limb selected, run the Get Data function first")
+
     # Query limb data
     with open(data_path, "r") as file:
         data = json.load(file)

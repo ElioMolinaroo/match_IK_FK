@@ -91,7 +91,7 @@
          </size>
         </property>
         <property name="text">
-         <string>Get Data</string>
+         <string>GET DATA</string>
         </property>
        </widget>
       </item>

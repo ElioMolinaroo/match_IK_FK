@@ -69,6 +69,6 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
         self.limb_label.setText(QCoreApplication.translate("MainWindow", u"LIMB", None))
         self.match_button.setText(QCoreApplication.translate("MainWindow", u"MATCH", None))
-        self.getData_button.setText(QCoreApplication.translate("MainWindow", u"Get Data", None))
+        self.getData_button.setText(QCoreApplication.translate("MainWindow", u"GET DATA", None))
     # retranslateUi
 

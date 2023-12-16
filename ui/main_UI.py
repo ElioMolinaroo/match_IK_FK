@@ -98,9 +98,8 @@ class mainUI(QtWidgets.QMainWindow):
         self.setCentralWidget(self.main_widget)
 
         # Add the available rigs data to the combo box
-        rigs_data_path = str(Path(__file__).parents[1] / 'rigs_data')
-        data_files = os.listdir(rigs_data_path)
-        rigs_data_list = [data.removesuffix('.json') for data in data_files]
+        data_nodes = cmds.ls(type='network')
+        rigs_data_list = [data.removesuffix('_DATA') for data in data_nodes]
         self.main_widget.limb_comboBox.addItems(rigs_data_list)
 
         # Signals

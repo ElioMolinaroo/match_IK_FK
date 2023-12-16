@@ -66,17 +66,17 @@ class Match():
 
 class MatchData():
 
-    """Ingests some data and spits out a database dictionary."""
+    """Ingests some data and spits out a database node (based on maya network node)."""
 
     def __init__(self,
                  data):
         self.data = data
 
         # Create database dict
-        self.createDatabaseDict()
+        self.createDatabaseNode()
 
 
-    def createDatabaseDict(self):
+    def createDatabaseNode(self):
         # get the blend attribute and the blend values
         blend_attr = "%s.%s" % (self.data[0], self.data[1])
         fk_blend_value = cmds.addAttr(blend_attr, q=1,min=1)
@@ -86,20 +86,26 @@ class MatchData():
         self.data_dict = {"blend_attr": blend_attr,
                           "fk_blend_value": fk_blend_value,
                           "ik_blend_value": ik_blend_value,
-                          "ik_controls": (self.data[5], self.data[6], self.data[7]), 
-                          "ik_joints": (self.data[2], self.data[3], self.data[4]), 
-                          "fk_controls": (self.data[11], self.data[12], self.data[13]),
-                          "fk_joints": (self.data[8], self.data[9], self.data[10])}
+                          "ik_control_01": self.data[5],
+                          "ik_control_02": self.data[6], 
+                          "ik_control_03": self.data[7], 
+                          "ik_joint_01": self.data[2],
+                          "ik_joint_02": self.data[3], 
+                          "ik_joint_03": self.data[4], 
+                          "fk_control_01": self.data[11],
+                          "fk_control_02": self.data[12], 
+                          "fk_control_03": self.data[13], 
+                          "fk_joint_01": self.data[8],
+                          "fk_joint_02": self.data[9], 
+                          "fk_joint_03": self.data[10]}
 
-    
-    def writeToDatabase(self):
-        self.file_name = self.data[0].split('|')[-1] + '.json'
-        database_path = Path(Path(__file__).parents[1] / "rigs_data", self.file_name)
-        
-        json_data = json.dumps(self.data_dict)
-        with open(database_path, "w") as file:
-            file.write(json_data)
-        file.close()
+        # Create the node
+        self.data_node = cmds.createNode('network', n=self.data[0]+'_DATA')
+
+        # Add the attributes to the node
+        for i in self.data_dict:
+            data_attr = cmds.addAttr(self.data_node, sn=i, dt='string')
+            cmds.setAttr("%s.%s"%(self.data_node, i), str(self.data_dict[i]), type='string')
 
 
 def _databaseProcess(raw_data_list):
@@ -116,35 +122,37 @@ def _databaseProcess(raw_data_list):
             if len(data) == 0:
                 cmds.error("Missing piece(s) of info")
 
-        # Write the content to the database
-        match_data.writeToDatabase()
         # Close the window
         matchData_UI._maya_delete_ui()
 
 
 def _matchProcess(combo_box):
     # Get the limb
-    combo_item = combo_box.currentText() + '.json'
-    data_path = Path(Path(__file__).parents[1]) / 'rigs_data' / combo_item
+    combo_item = combo_box.currentText() + '_DATA'
+    #data_path = Path(Path(__file__).parents[1]) / 'rigs_data' / combo_item
 
     if len(combo_box.currentText()) == 0:
         cmds.error("No Limb selected, run the Get Data function first")
 
     # Query limb data
-    with open(data_path, "r") as file:
-        data = json.load(file)
-    file.close()
+    data_query = {"blend_attr": cmds.getAttr(combo_item+'.blend_attr'),
+                          "fk_blend_value": float(cmds.getAttr(combo_item+'.fk_blend_value')),
+                          "ik_blend_value": float(cmds.getAttr(combo_item+'.ik_blend_value')),
+                          "ik_controls": (cmds.getAttr(combo_item+'.ik_control_01'), cmds.getAttr(combo_item+'.ik_control_02'), cmds.getAttr(combo_item+'.ik_control_03')), 
+                          "ik_joints": (cmds.getAttr(combo_item+'.ik_joint_01'), cmds.getAttr(combo_item+'.ik_joint_02'), cmds.getAttr(combo_item+'.ik_joint_03')), 
+                          "fk_controls": (cmds.getAttr(combo_item+'.fk_control_01'), cmds.getAttr(combo_item+'.fk_control_02'), cmds.getAttr(combo_item+'.fk_control_03')),
+                          "fk_joints": (cmds.getAttr(combo_item+'.fk_joint_01'), cmds.getAttr(combo_item+'.fk_joint_02'), cmds.getAttr(combo_item+'.fk_joint_03'))}
 
     # Get current blend value
-    current_blend_value = cmds.getAttr(data['blend_attr'])
+    current_blend_value = cmds.getAttr(data_query['blend_attr'])
 
     # Create matcher object
-    matcher = Match(data['blend_attr'], data['fk_blend_value'], data['ik_blend_value'], data['ik_controls'], data['ik_joints'], data['fk_controls'], data['fk_joints'])
+    matcher = Match(data_query['blend_attr'], data_query['fk_blend_value'], data_query['ik_blend_value'], data_query['ik_controls'], data_query['ik_joints'], data_query['fk_controls'], data_query['fk_joints'])
 
     # Figure out which way it should go
-    if current_blend_value == data['fk_blend_value']:
+    if current_blend_value == data_query['fk_blend_value']:
         matcher.FKtoIK()
-    elif current_blend_value == data['ik_blend_value']:
+    elif current_blend_value == data_query['ik_blend_value']:
         matcher.IKtoFK()
     else:
         pass
